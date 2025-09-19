@@ -1,13 +1,15 @@
-import os, torch
-from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM
-from transformers import pipeline
+﻿import torch
+from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, pipeline
+
+from src.middleware.auth import AuthMiddleware
+from src.middleware.llm import LlmAiMiddleware
 
 class AiProvider:
     def __init__(self):
+        self.hf_auth = AuthMiddleware.hugging_face_token()
+        self.model_id = LlmAiMiddleware.model_id()
         self.llm = None
         self.tokenizer = None
-        self.token = os.getenv("HF_TOKEN")
-        self.model_id = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
 
     def answer_vs_prompt(self, prompt: list[dict]) -> str:
         pipe_config = {
@@ -31,7 +33,7 @@ class AiProvider:
     def init_ai(self):
         if self.llm:
             return
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=self.token, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=self.hf_auth, use_fast=True)
         self.llm = self.create_llm()
 
     def create_llm(self):
@@ -46,5 +48,5 @@ class AiProvider:
             device_map="auto",
             quantization_config=wages_config,
             low_cpu_mem_usage=True,
-            token=self.token,
+            token=self.hf_auth,
         )
