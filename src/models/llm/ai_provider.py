@@ -1,5 +1,9 @@
-﻿import torch
+﻿from src.helpers.php_wk import *
+import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, pipeline
+from transformers import PreTrainedTokenizerFast
+from transformers import PreTrainedTokenizer
+from transformers.modeling_utils import PreTrainedModel
 
 from src.middleware.auth import AuthMiddleware
 from src.middleware.llm import LlmAiMiddleware
@@ -8,8 +12,8 @@ class AiProvider:
     def __init__(self):
         self.hf_auth = AuthMiddleware.hugging_face_token()
         self.model_id = LlmAiMiddleware.model_id()
-        self.llm = None
-        self.tokenizer = None
+        self.llm : PreTrainedModel = None
+        self.tokenizer : PreTrainedTokenizer | PreTrainedTokenizerFast = None
 
     def answer_vs_prompt(self, prompt: list[dict]) -> str:
         pipe_config = {
