@@ -1,8 +1,6 @@
 import config
 
 ai_models = {
-    'default': 'meta',
-
     'google': 'google/gemma-7b-it',
     'meta': 'meta-llama/Meta-Llama-3.1-8B-Instruct',
     'microsoft': 'microsoft/Phi-3.5-mini-instruct',
@@ -12,8 +10,8 @@ ai_models = {
 
 class LlmAiMiddleware:
     @staticmethod
-    def handle():
-        config.llm_id = ai_models['default']
+    def handle(llm_id: str):
+        config.llm_id = llm_id
 
     @staticmethod
     def get_config() -> str:

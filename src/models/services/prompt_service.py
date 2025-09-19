@@ -4,11 +4,12 @@
 class PromptService:
     @staticmethod
     def prompt_translate_slavic_to_english(text: str) -> tuple[float, float, list[dict]]:
-        return (0.65, 1.5, [
+        return (0.4, 1.5, [
             {
                 'role': 'user',
                 'content': (
                     'You are a professional translator from Slavic languages into English.'
+                    'Strictly preserve the paragraph structure of the original text. Do not merge paragraphs and do not create new ones.'
                     'Translate in a literary manner, using the style of realism and naturalism. Stay maximally close to the original text, but revise and improve any parts that are clearly weak or poorly written.'
                     'Translate from Russian into English.'
                     'Answer only in English.'
@@ -19,12 +20,13 @@ class PromptService:
 
     @staticmethod
     def prompt_translate_english_to_russian(text: str) -> tuple[float, float, list[dict]]:
-        return (0.65, 1.5, [
+        return (0.4, 1.5, [
             {
                 'role': 'user',
                 'content': (
                     'You are a professional translator from English into Russian.'
                     'Translate in a literary manner, using the style of realism and naturalism. Stay maximally close to the original text, but revise and improve any parts that are clearly weak or poorly written.'
+                    'Strictly preserve the paragraph structure of the original text. Do not merge paragraphs and do not create new ones.'
                     'Translate from English into Russian.'
                     'Answer only in Russian.'
                     'Translate: ' + text

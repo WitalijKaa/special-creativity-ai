@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from src.controllers.requests.request_ai import RequestAi
 
-class RequestTranslate(BaseModel):
+class RequestTranslate(RequestAi):
     text: str
