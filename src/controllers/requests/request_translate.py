@@ -1,4 +1,4 @@
 from pydantic import BaseModel
 
-class RequestTranslateEng(BaseModel):
+class RequestTranslate(BaseModel):
     text: str

@@ -16,3 +16,18 @@ class PromptService:
                 ),
             },
         ])
+
+    @staticmethod
+    def prompt_translate_english_to_russian(text: str) -> tuple[float, float, list[dict]]:
+        return (0.65, 1.5, [
+            {
+                'role': 'user',
+                'content': (
+                    'You are a professional translator from English into Russian.'
+                    'Translate in a literary manner, using the style of realism and naturalism. Stay maximally close to the original text, but revise and improve any parts that are clearly weak or poorly written.'
+                    'Translate from English into Russian.'
+                    'Answer only in Russian.'
+                    'Translate: ' + text
+                ),
+            },
+        ])
