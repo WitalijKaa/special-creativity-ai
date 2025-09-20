@@ -1,5 +1,6 @@
 from src.helpers.php_wk import *
 import gc
+import re
 import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, pipeline
 from transformers import PreTrainedTokenizerFast
@@ -18,18 +19,49 @@ class AiProvider:
         self.model_id: str = LlmAiMiddleware.get_config()
         self.llm: PreTrainedModel | None = None
         self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None = None
+        self.max_tokens_per_chunk = 42
+        self.text_separ = LlmAiMiddleware.text_separ() * 4
+        self.small_paragraphs_max_tokens = 20
 
-    def translate_rus_to_eng(self, text: str) -> str:
+    def translate_rus_to_eng(self, text: list[str]) -> list[str]:
         self.init_ai()
-        text_tokens_count = len(self.tokenizer.encode(text, add_special_tokens=False))
-        min_length, max_length, prompt = PromptService.prompt_translate_slavic_to_english(text)
-        return self.answer_vs_prompt(prompt, int(text_tokens_count * min_length), int(text_tokens_count * max_length))
+        tokens_vs_paragraphs = [len(self.tokenizer.encode(paragraph, add_special_tokens=False)) for paragraph in text]
+        response = []
+        while len(text) > 0:
+            chunk, next_paragraphs_count = self.translate_chunk(tokens_vs_paragraphs, text)
+            del text[:next_paragraphs_count]
+            del tokens_vs_paragraphs[:next_paragraphs_count]
+            response.extend(chunk)
+        return response
+
+    def translate_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separate_tiny: int = 0) -> tuple[list[str], int]:
+        next_paragraphs_count = AiProvider.count_paragraphs_vs_tokens(tokens_vs_paragraphs, self.max_tokens_per_chunk, separate_tiny)
+        next_text = paragraphs[:next_paragraphs_count]
+        sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
+        min_length, max_length, prompt = PromptService.prompt_translate_slavic_to_english(self.text_separ.join(next_text))
+        chunk = self.answer_vs_prompt(prompt, int(sum_tokens * min_length), int(sum_tokens * max_length))
+        separ_sign = self.text_separ[0]
+        chunk = re.sub(separ_sign + '+', separ_sign, chunk)
+        chunk = chunk.split(separ_sign)
+        if len(chunk) != next_paragraphs_count and separate_tiny < self.small_paragraphs_max_tokens:
+            separate_tiny += 10
+            return self.translate_chunk(tokens_vs_paragraphs, paragraphs, separate_tiny=separate_tiny)
+        return chunk, next_paragraphs_count
 
     def translate_eng_to_rus(self, text: str) -> str:
         self.init_ai()
         text_tokens_count = len(self.tokenizer.encode(text, add_special_tokens=False))
         min_length, max_length, prompt = PromptService.prompt_translate_english_to_russian(text)
         return self.answer_vs_prompt(prompt, int(text_tokens_count * min_length), int(text_tokens_count * max_length))
+
+    @staticmethod
+    def count_paragraphs_vs_tokens(elements: list[int], limit: int, separate_tiny: int) -> int:
+        no_sum = 0
+        for ix, no in enumerate(elements):
+            no_sum += no
+            if limit < no_sum or (separate_tiny > 0 and no <= separate_tiny):
+                return 1 if ix < 1 else ix
+        return len(elements)
 
     def answer_vs_prompt(self, prompt: list[dict], min_answer_length: int, max_answer_length: int) -> str:
         pipe_config = LlmPipeConfigService.get_config()
@@ -53,6 +85,7 @@ class AiProvider:
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=self.hf_auth, use_fast=True)
         self.llm = self.create_llm()
         self.llm.to(DEVICE_CUDA)
+        self.max_tokens_per_chunk = LlmAiMiddleware.max_tokens()
 
     def create_llm(self):
         wages_config = BitsAndBytesConfig(
