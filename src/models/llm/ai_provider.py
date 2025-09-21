@@ -4,12 +4,12 @@ from src.models.services.prompt.slavic_to_eng import PromptServiceSlavicToEng
 
 
 class AiProvider(AiProviderBase):
-    def translate_eng_to_rus(self, text: list[str]) -> list[str]:
-        self.init_ai()
-        self.prompter = PromptServiceSlavicToEng
-        return self.translate_text(text)
-
     def translate_rus_to_eng(self, text: list[str]) -> list[str]:
         self.init_ai()
+        self.prompter = PromptServiceSlavicToEng
+        return self.translate_paragraphs(text)
+
+    def translate_eng_to_rus(self, text: list[str]) -> list[str]:
+        self.init_ai()
         self.prompter = PromptServiceEngToSlavic
-        return self.translate_text(text)
+        return self.translate_paragraphs(text)

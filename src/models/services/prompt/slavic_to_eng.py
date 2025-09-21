@@ -16,6 +16,7 @@ class PromptServiceSlavicToEng(AbstractTranslateService):
                     'You are a professional translator from Slavic languages into English.\n' +
                     AbstractTranslateService.rule_separators(single_paragraph) +
                     AbstractTranslateService.rule_improve(single_paragraph) +
+                    'Do not modify any names written using English letters.\n'
                     'Translate from Russian into English.\n'
                     'Answer only in English, and only translated text.\n'
                     'Translate:\n' + text
