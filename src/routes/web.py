@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from src.middleware.group.web_llm_middleware import web_llm_middleware
-from src.controllers.translate.translate import *
+from src.controllers.translate.translate import action_translate_rus, action_translate_eng
 from src.controllers.requests.request_translate import RequestTranslate
 
 def web_routes_init(app: FastAPI):
