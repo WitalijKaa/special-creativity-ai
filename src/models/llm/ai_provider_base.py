@@ -25,6 +25,9 @@ class AiProviderBase:
         self.text_separ = LlmAiMiddleware.text_separ() * 4
         self.small_paragraphs_max_tokens = 20
 
+        self.special_words: list[tuple[str, str]] = []
+        self.names: list[str] = []
+
     def translate_paragraphs(self, text: list[str]) -> list[str]:
         tokens_vs_paragraphs = [len(self.tokenizer.encode(paragraph, add_special_tokens=False)) for paragraph in text]
         response = []
@@ -39,7 +42,7 @@ class AiProviderBase:
         next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, self.max_tokens_per_chunk, separate_tiny)
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
-        min_length, max_length, prompt = self.prompter.prompt(self.text_separ.join(next_text))
+        min_length, max_length, prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
         chunk = self.answer_vs_prompt(prompt, int(sum_tokens * min_length), int(sum_tokens * max_length))
         chunk = self.split_chunk_to_paragraphs(chunk)
         aLog.debug(f"Translation chunk p{next_paragraphs_count} -> p{len(chunk)} tokens({sum_tokens}) {chunk}")

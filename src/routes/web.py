@@ -8,9 +8,9 @@ def web_routes_init(app: FastAPI):
     @app.post("/translate_eng")
     async def route_translate_eng(request: RequestTranslate):
         web_llm_middleware(request)
-        return {"response": action_translate_eng(request.text)}
+        return {"response": action_translate_eng(request.content)}
 
     @app.post("/translate_rus")
     async def route_translate_rus(request: RequestTranslate):
         web_llm_middleware(request)
-        return {"response": action_translate_rus(request.text)}
+        return {"response": action_translate_rus(request.content)}

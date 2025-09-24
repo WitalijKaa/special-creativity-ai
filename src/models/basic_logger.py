@@ -10,23 +10,23 @@ class BasicLogger:
 
     @staticmethod
     def debug(message: str, *args, **kwargs) -> None:
-        BasicLogger.l().debug(message, *args, **kwargs)
+        BasicLogger.log().debug(message, *args, **kwargs)
 
     @staticmethod
     def info(message: str, *args, **kwargs) -> None:
-        BasicLogger.l().info(message, *args, **kwargs)
+        BasicLogger.log().info(message, *args, **kwargs)
 
     @staticmethod
     def warning(message: str, *args, **kwargs) -> None:
-        BasicLogger.l().warning(message, *args, **kwargs)
+        BasicLogger.log().warning(message, *args, **kwargs)
 
     @staticmethod
     def error(message: str, *args, **kwargs) -> None:
-        BasicLogger.l().error(message, *args, **kwargs)
+        BasicLogger.log().error(message, *args, **kwargs)
 
     @staticmethod
     def critical(message: str, *args, **kwargs) -> None:
-        BasicLogger.l().critical(message, *args, **kwargs)
+        BasicLogger.log().critical(message, *args, **kwargs)
 
     @classmethod
     def init(cls, root_path: Path):
@@ -42,7 +42,7 @@ class BasicLogger:
             cls.singleton.propagate = False
 
     @classmethod
-    def l(cls) -> logging.Logger:
+    def log(cls) -> logging.Logger:
         return cls.singleton
 
 aLog = BasicLogger
