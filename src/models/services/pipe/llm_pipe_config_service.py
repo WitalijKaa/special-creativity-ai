@@ -1,7 +1,9 @@
 from src.middleware.pipe import LlmPipeMiddleware
+from src.models.services.pipe.pipe_params import LlmPipeParams
+
+# TOT USED !!!!
 
 class LlmPipeConfigService:
     @staticmethod
-    def get_config() -> dict:
-        the_config = getattr(LlmPipeConfigService, LlmPipeMiddleware.get_config())
-        return the_config()
+    def get_config() -> LlmPipeParams:
+        return LlmPipeMiddleware.get_config()

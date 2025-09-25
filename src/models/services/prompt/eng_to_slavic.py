@@ -1,15 +1,11 @@
-# return (min_answer_vs_question_length, max_answer_vs_question_length, [
-# min_length, max_length, prompt =
-
-from src.middleware.llm import LlmModelMiddleware
 from src.models.services.prompt.abstract_prompt import AbstractTranslateService
 
 
 class PromptServiceEngToSlavic(AbstractTranslateService):
     @staticmethod
-    def prompt(text: str, special_words: list[tuple[str, str]], names: list[str]) -> tuple[float, float, list[dict]]:
+    def prompt(text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
         single_paragraph = AbstractTranslateService.is_single_paragraph(text)
-        return (0.5, 1.8, [
+        return [
             {
                 'role': 'user',
                 'content': (
@@ -23,4 +19,8 @@ class PromptServiceEngToSlavic(AbstractTranslateService):
                     'Translate:\n' + text
                 ),
             },
-        ])
+        ]
+
+    @staticmethod
+    def min_max_multiplicator() -> tuple[float, float]:
+        return 0.5, 1.8

@@ -11,9 +11,7 @@ from transformers.modeling_utils import PreTrainedModel
 
 from src.middleware.auth import AuthMiddleware
 from src.middleware.llm import LlmModelMiddleware
-from src.models.services.pipe.pipe_params import LlmPipeParams
 from src.models.services.prompt.abstract_prompt import AbstractTranslateService
-from src.models.services.pipe.llm_pipe_config_service import LlmPipeConfigService
 
 
 class AiProviderBase:
@@ -23,16 +21,20 @@ class AiProviderBase:
         self.llm: PreTrainedModel | None = None
         self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None = None
         self.prompter: AbstractTranslateService | None = None
-        self.max_tokens_per_chunk = 42
         self.text_separ = LlmModelMiddleware.text_separ() * 4
-        self.small_paragraphs_max_tokens = 20
+        self.tokens_small_paragraph_max = 20
+
+        self.tokens_prefix = 0
+        self.tokens_maxima = 42
 
         self.special_words: list[tuple[str, str]] = []
         self.names: list[str] = []
 
     def translate_paragraphs(self, text: list[str]) -> list[str]:
-        tokens_vs_paragraphs = [len(self.tokenizer.encode(paragraph, add_special_tokens=False)) for paragraph in text]
+        self.tokens_prefix = self.prompt_max_length()
+        tokens_vs_paragraphs = [self.count_tokens_of_text(paragraph) for paragraph in text]
         response = []
+        aLog.debug(f'Translation paragraphs {len(text)} Start')
         while len(text) > 0:
             chunk, next_paragraphs_count = self.translate_paragraphs_chunk(tokens_vs_paragraphs, text)
             del text[:next_paragraphs_count]
@@ -41,17 +43,19 @@ class AiProviderBase:
         return response
 
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separate_tiny: int = 0) -> tuple[list[str], int]:
-        next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, self.max_tokens_per_chunk, separate_tiny)
+        piping = LlmPipeMiddleware.get_config()
+        next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix, separate_tiny)
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
-        min_length, max_length, prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
-        pipe_customization = LlmPipeMiddleware.get_config().calculate_tokens(sum_tokens, min_length, max_length)
-        chunk = self.answer_vs_prompt(prompt, pipe_customization.config())
+        piping.calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
+        aLog.debug(f'SUM TOKENS tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
+        prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
+        chunk = self.answer_vs_prompt(prompt, piping.config())
         chunk = self.split_chunk_to_paragraphs(chunk)
-        aLog.debug(f"Translation chunk p{next_paragraphs_count} -> p{len(chunk)} tokens({sum_tokens}) {chunk}")
-        if len(chunk) != next_paragraphs_count and separate_tiny < self.small_paragraphs_max_tokens:
+        aLog.debug(f'Translation chunk Done ( {next_paragraphs_count} -> {len(chunk)} ) tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix}) {chunk}')
+        if len(chunk) != next_paragraphs_count and separate_tiny < self.tokens_small_paragraph_max:
             separate_tiny += 10
-            aLog.debug(f"Translation chunk was problematic, so separate tiny paragraph vs_tokens_size({separate_tiny})")
+            aLog.debug(f'Translation chunk was problematic, so separate tiny paragraph vs_tokens_size({separate_tiny})')
             return self.translate_paragraphs_chunk(tokens_vs_paragraphs, paragraphs, separate_tiny=separate_tiny)
         return chunk, next_paragraphs_count
 
@@ -63,6 +67,14 @@ class AiProviderBase:
             if limit < no_sum or (separate_tiny > 0 and no <= separate_tiny):
                 return 1 if ix < 1 else ix
         return len(elements)
+
+    def prompt_max_length(self) -> int:
+        prompt_empty = self.prompter.prompt(''.join(['', '']), self.special_words, self.names)
+        prompt_llm_empty = self.tokenizer.apply_chat_template(prompt_empty, tokenize=False, add_generation_prompt=True)
+        return self.count_tokens_of_text(prompt_llm_empty)
+
+    def count_tokens_of_text(self, text: str) -> int:
+        return len(self.tokenizer.encode(text, add_special_tokens=False))
 
     def split_chunk_to_paragraphs(self, chunk: str) -> list[str]:
         separ_sign = self.text_separ[0]
@@ -87,7 +99,7 @@ class AiProviderBase:
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=self.hf_auth, use_fast=True)
         self.llm = self.create_llm()
         self.llm.to(DEVICE_CUDA)
-        self.max_tokens_per_chunk = LlmModelMiddleware.max_tokens()
+        self.tokens_maxima = LlmModelMiddleware.max_tokens()
 
     def create_llm(self):
         wages_config = BitsAndBytesConfig(
