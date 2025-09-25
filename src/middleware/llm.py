@@ -4,28 +4,23 @@ ai_models = {
     'meta': {
         'id': 'meta-llama/Meta-Llama-3.1-8B-Instruct',
         'max_tokens': 1950,
-        'separator': '#',
     },
     'china': {
         'id': 'Qwen/Qwen2.5-7B-Instruct',
         'max_tokens': 2050,
-        'separator': '#',
     },
     'france': {
         'id': 'mistralai/Mistral-7B-Instruct-v0.3',
-        'max_tokens': 1500,
-        'separator': '|',
+        'max_tokens': 2600,
     },
     'google': {
         'id': 'google/gemma-7b-it',
-        'max_tokens': 1500,
-        'separator': '#',
+        'max_tokens': 1800,
         'only_user_role': True,
     },
     'microsoft': {
         'id': 'microsoft/Phi-3.5-mini-instruct',
-        'max_tokens': 1500,
-        'separator': '#',
+        'max_tokens': 1800,
     },
 }
 
@@ -40,7 +35,7 @@ class LlmModelMiddleware:
 
     @staticmethod
     def text_separ() -> str:
-        return ai_models[config.llm_id]['separator']
+        return '#'
 
     @staticmethod
     def max_tokens() -> str:

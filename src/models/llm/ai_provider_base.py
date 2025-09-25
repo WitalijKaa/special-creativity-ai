@@ -44,20 +44,19 @@ class AiProviderBase:
 
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
         piping = LlmPipeMiddleware.get_config()
-        next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
-        if separation_strategy > 1 and next_paragraphs_count > 1:
-            next_paragraphs_count = int(next_paragraphs_count / separation_strategy)
-            next_paragraphs_count = 1 if 1 > next_paragraphs_count else next_paragraphs_count
+        next_paragraphs_count_original = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
+        next_paragraphs_count = AiProviderBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
+        aLog.debug(f'Translation chunk {next_paragraphs_count} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
         piping.calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
         prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
         chunk = self.answer_vs_prompt(prompt, piping.config())
         chunk = self.split_chunk_to_paragraphs(chunk)
-        aLog.debug(f'Translation chunk Done ( {next_paragraphs_count} -> {len(chunk)} ) tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix}) {chunk}')
+        aLog.debug(f'Translation chunk ( {next_paragraphs_count} -> {len(chunk)} ) Done tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix}) {chunk}')
         if len(chunk) != next_paragraphs_count and next_paragraphs_count > 1:
-            separation_strategy += 1
-            aLog.debug(f'Translation chunk was problematic, lets take less paragraphs {next_paragraphs_count} -> {int(next_paragraphs_count / separation_strategy)}')
+            separation_strategy += 1 if separation_strategy < 3 else 2
+            aLog.debug(f'Translation chunk was problematic, separating paragraphs {next_paragraphs_count} -> {int(next_paragraphs_count_original / separation_strategy)}')
             return self.translate_paragraphs_chunk(tokens_vs_paragraphs, paragraphs, separation_strategy=separation_strategy)
         if len(chunk) != next_paragraphs_count:
             chunk = [' '.join(chunk)]
@@ -72,6 +71,13 @@ class AiProviderBase:
                 return 1 if ix < 1 else ix
         return len(tokens_vs_paragraphs)
 
+    @staticmethod
+    def use_separation_strategy(separation_strategy: int, paragraphs_count: int) -> int:
+        if separation_strategy > 1 and paragraphs_count > 1:
+            next_paragraphs_count = int(paragraphs_count / separation_strategy)
+            return 1 if 1 > next_paragraphs_count else next_paragraphs_count
+        return paragraphs_count
+
     def prompt_max_length(self) -> int:
         prompt_empty = self.prompter.prompt(''.join(['', '']), self.special_words, self.names)
         prompt_llm_empty = self.tokenizer.apply_chat_template(prompt_empty, tokenize=False, add_generation_prompt=True)
@@ -82,8 +88,11 @@ class AiProviderBase:
 
     def split_chunk_to_paragraphs(self, chunk: str) -> list[str]:
         separ_sign = self.text_separ[0]
-        chunk = re.sub(re.escape(separ_sign) + '+', separ_sign, chunk)
-        return chunk.split(separ_sign)
+        if separ_sign in chunk:
+            chunk = re.sub(re.escape(separ_sign) + '+', separ_sign, chunk)
+            return [paragraph.strip() for paragraph in chunk.split(separ_sign) if paragraph.strip()]
+        else:
+            return [paragraph.strip() for paragraph in chunk.splitlines() if paragraph.strip()]
 
     def answer_vs_prompt(self, prompt: list[dict], pipe_config: dict) -> str:
         prompt_llm = self.tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)

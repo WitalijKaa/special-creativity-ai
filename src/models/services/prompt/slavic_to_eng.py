@@ -12,7 +12,6 @@ class PromptServiceSlavicToEng(AbstractTranslateService):
             cls.rule_special_words(special_words, 'The text contains new Slavic words; when translating them, take into account singular and plural forms, but translate them strictly according to this list:') +
             cls.rule_names(names) +
             'Translate from Russian into English.\n'
-            'Do not use linebreaks.\n'
             'Answer only in English, and only translated text.'
         )
         user_content = 'Translate:\n' + text
