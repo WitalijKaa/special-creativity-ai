@@ -1,2 +1,2 @@
-llm_id = 'meta'
-llm_mode = 'strict'
+llm_id = ''
+llm_mode = ''

@@ -1,4 +1,5 @@
 from src.helpers.php_wk import *
+from src.middleware.pipe import LlmPipeMiddleware
 from src.models.basic_logger import aLog
 import gc
 import re
@@ -9,20 +10,21 @@ from transformers import PreTrainedTokenizer
 from transformers.modeling_utils import PreTrainedModel
 
 from src.middleware.auth import AuthMiddleware
-from src.middleware.llm import LlmAiMiddleware
+from src.middleware.llm import LlmModelMiddleware
+from src.models.services.pipe.pipe_params import LlmPipeParams
 from src.models.services.prompt.abstract_prompt import AbstractTranslateService
-from src.models.services.llm_pipe_config_service import LlmPipeConfigService
+from src.models.services.pipe.llm_pipe_config_service import LlmPipeConfigService
 
 
 class AiProviderBase:
     def __init__(self):
         self.hf_auth: str = AuthMiddleware.hugging_face_token()
-        self.model_id: str = LlmAiMiddleware.get_config()
+        self.model_id: str = LlmModelMiddleware.get_config()
         self.llm: PreTrainedModel | None = None
         self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None = None
         self.prompter: AbstractTranslateService | None = None
         self.max_tokens_per_chunk = 42
-        self.text_separ = LlmAiMiddleware.text_separ() * 4
+        self.text_separ = LlmModelMiddleware.text_separ() * 4
         self.small_paragraphs_max_tokens = 20
 
         self.special_words: list[tuple[str, str]] = []
@@ -43,7 +45,8 @@ class AiProviderBase:
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
         min_length, max_length, prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
-        chunk = self.answer_vs_prompt(prompt, int(sum_tokens * min_length), int(sum_tokens * max_length))
+        pipe_customization = LlmPipeMiddleware.get_config().calculate_tokens(sum_tokens, min_length, max_length)
+        chunk = self.answer_vs_prompt(prompt, pipe_customization.config())
         chunk = self.split_chunk_to_paragraphs(chunk)
         aLog.debug(f"Translation chunk p{next_paragraphs_count} -> p{len(chunk)} tokens({sum_tokens}) {chunk}")
         if len(chunk) != next_paragraphs_count and separate_tiny < self.small_paragraphs_max_tokens:
@@ -66,29 +69,25 @@ class AiProviderBase:
         chunk = re.sub(separ_sign + '+', separ_sign, chunk)
         return chunk.split(separ_sign)
 
-    def answer_vs_prompt(self, prompt: list[dict], min_answer_length: int, max_answer_length: int) -> str:
-        pipe_config = LlmPipeConfigService.get_config()
-        pipe_config['min_new_tokens'] = min_answer_length
-        pipe_config['max_new_tokens'] = max_answer_length
-
+    def answer_vs_prompt(self, prompt: list[dict], pipe_config: dict) -> str:
         prompt_llm = self.tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)
-        pipe = pipeline("text-generation", self.llm, tokenizer=self.tokenizer, **pipe_config)
+        pipe = pipeline('text-generation', self.llm, tokenizer=self.tokenizer, **pipe_config)
         answer = pipe(prompt_llm, return_full_text=False)[0]['generated_text']
         return answer
 
     def init_ai(self):
-        if self.llm and self.model_id == LlmAiMiddleware.get_config():
+        if self.llm and self.model_id == LlmModelMiddleware.get_config():
             return
         if self.llm:
             self.llm = None
             self.tokenizer = None
             gc.collect()
             torch.cuda.empty_cache()
-        self.model_id = LlmAiMiddleware.get_config()
+        self.model_id = LlmModelMiddleware.get_config()
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, token=self.hf_auth, use_fast=True)
         self.llm = self.create_llm()
         self.llm.to(DEVICE_CUDA)
-        self.max_tokens_per_chunk = LlmAiMiddleware.max_tokens()
+        self.max_tokens_per_chunk = LlmModelMiddleware.max_tokens()
 
     def create_llm(self):
         wages_config = BitsAndBytesConfig(

@@ -1,7 +1,7 @@
 # return (min_answer_vs_question_length, max_answer_vs_question_length, [
 # min_length, max_length, prompt =
 
-from src.middleware.llm import LlmAiMiddleware
+from src.middleware.llm import LlmModelMiddleware
 from src.models.services.prompt.abstract_prompt import AbstractTranslateService
 
 
