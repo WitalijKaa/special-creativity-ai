@@ -11,6 +11,10 @@ class AbstractTranslateService:
         raise NotImplementedError('AbstractTranslateService must implement min_max_multiplicator()')
 
     @staticmethod
+    def must_use_only_user_role() -> bool:
+        return LlmModelMiddleware.must_use_only_user_role()
+
+    @staticmethod
     def is_single_paragraph(text: str) -> bool:
         return 2 > len(text.split(LlmModelMiddleware.text_separ()))
 
@@ -43,3 +47,24 @@ class AbstractTranslateService:
             return ''
         return ('These names appear in the text; consider it as just names:\n'
                 + '\n'.join([f"{name}" for name in names]) + '\n')
+
+    @classmethod
+    def prompt_structure(cls, system_content: str, user_content: str) -> list[dict]:
+        if cls.must_use_only_user_role():
+            return [
+                {
+                    'role': 'user',
+                    'content': system_content + '\n\n' + user_content,
+                },
+            ]
+        else:
+            return [
+                {
+                    'role': 'system',
+                    'content': system_content,
+                },
+                {
+                    'role': 'user',
+                    'content': user_content,
+                },
+            ]

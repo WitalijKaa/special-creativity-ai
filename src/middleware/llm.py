@@ -1,25 +1,31 @@
 import config
 
 ai_models = {
-    'google': {
-        'id': 'google/gemma-7b-it',
-        'max_tokens': 1100,
-    },
     'meta': {
         'id': 'meta-llama/Meta-Llama-3.1-8B-Instruct',
         'max_tokens': 1950,
-    },
-    'microsoft': {
-        'id': 'microsoft/Phi-3.5-mini-instruct',
-        'max_tokens': 1100,
-    },
-    'france': {
-        'id': 'mistralai/Mistral-7B-Instruct-v0.3',
-        'max_tokens': 1100,
+        'separator': '#',
     },
     'china': {
         'id': 'Qwen/Qwen2.5-7B-Instruct',
-        'max_tokens': 1100,
+        'max_tokens': 1200, # 2000
+        'separator': '#',
+    },
+    'france': {
+        'id': 'mistralai/Mistral-7B-Instruct-v0.3',
+        'max_tokens': 1500,
+        'separator': '|',
+    },
+    'google': {
+        'id': 'google/gemma-7b-it',
+        'max_tokens': 1500,
+        'separator': '#',
+        'only_user_role': True,
+    },
+    'microsoft': {
+        'id': 'microsoft/Phi-3.5-mini-instruct',
+        'max_tokens': 1500,
+        'separator': '#',
     },
 }
 
@@ -34,8 +40,12 @@ class LlmModelMiddleware:
 
     @staticmethod
     def text_separ() -> str:
-        return '#'
+        return ai_models[config.llm_id]['separator']
 
     @staticmethod
     def max_tokens() -> str:
         return ai_models[config.llm_id]['max_tokens']
+
+    @staticmethod
+    def must_use_only_user_role() -> bool:
+        return ai_models[config.llm_id].get('only_user_role') is True

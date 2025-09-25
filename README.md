@@ -4,3 +4,6 @@
 #### .\.ex_env\Scripts\Activate.ps1
 #### pip install pydantic, fastapi[standard]
 #### fastapi dev .\main.py
+
+### france
+#### pip install sentencepiece

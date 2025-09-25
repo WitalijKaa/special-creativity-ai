@@ -48,7 +48,6 @@ class AiProviderBase:
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
         piping.calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
-        aLog.debug(f'SUM TOKENS tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
         prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
         chunk = self.answer_vs_prompt(prompt, piping.config())
         chunk = self.split_chunk_to_paragraphs(chunk)
@@ -64,7 +63,7 @@ class AiProviderBase:
         no_sum = 0
         for ix, no in enumerate(elements):
             no_sum += no
-            if limit < no_sum or (separate_tiny > 0 and no <= separate_tiny):
+            if limit < no_sum or (0 < separate_tiny < no_sum):
                 return 1 if ix < 1 else ix
         return len(elements)
 
@@ -78,7 +77,7 @@ class AiProviderBase:
 
     def split_chunk_to_paragraphs(self, chunk: str) -> list[str]:
         separ_sign = self.text_separ[0]
-        chunk = re.sub(separ_sign + '+', separ_sign, chunk)
+        chunk = re.sub(re.escape(separ_sign) + '+', separ_sign, chunk)
         return chunk.split(separ_sign)
 
     def answer_vs_prompt(self, prompt: list[dict], pipe_config: dict) -> str:
@@ -87,7 +86,7 @@ class AiProviderBase:
         answer = pipe(prompt_llm, return_full_text=False)[0]['generated_text']
         return answer
 
-    def init_ai(self):
+    def init_llm(self):
         if self.llm and self.model_id == LlmModelMiddleware.get_config():
             return
         if self.llm:

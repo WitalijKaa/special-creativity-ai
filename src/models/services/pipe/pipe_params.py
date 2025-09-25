@@ -32,7 +32,7 @@ class LlmPipeParams:
     def calculate_tokens_maxima(self, video_card_maxima: int) -> int:
         if 1 == self.calculation_branches:
             return video_card_maxima
-        return int(video_card_maxima / self.calculation_branches * 1.2)
+        return int(video_card_maxima / self.calculation_branches * 1.35)
 
     def calculate_tokens(self, tokens: int, min_mult: float, max_mult: float ):
         self.min_new_tokens = int(tokens * min_mult)
