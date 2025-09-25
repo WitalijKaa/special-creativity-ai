@@ -8,7 +8,7 @@ ai_models = {
     },
     'china': {
         'id': 'Qwen/Qwen2.5-7B-Instruct',
-        'max_tokens': 1200, # 2000
+        'max_tokens': 2050,
         'separator': '#',
     },
     'france': {

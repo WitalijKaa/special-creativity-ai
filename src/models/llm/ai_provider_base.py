@@ -42,9 +42,12 @@ class AiProviderBase:
             response.extend(chunk)
         return response
 
-    def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separate_tiny: int = 0) -> tuple[list[str], int]:
+    def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
         piping = LlmPipeMiddleware.get_config()
-        next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix, separate_tiny)
+        next_paragraphs_count = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
+        if separation_strategy > 1 and next_paragraphs_count > 1:
+            next_paragraphs_count = int(next_paragraphs_count / separation_strategy)
+            next_paragraphs_count = 1 if 1 > next_paragraphs_count else next_paragraphs_count
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
         piping.calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
@@ -52,20 +55,22 @@ class AiProviderBase:
         chunk = self.answer_vs_prompt(prompt, piping.config())
         chunk = self.split_chunk_to_paragraphs(chunk)
         aLog.debug(f'Translation chunk Done ( {next_paragraphs_count} -> {len(chunk)} ) tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix}) {chunk}')
-        if len(chunk) != next_paragraphs_count and separate_tiny < self.tokens_small_paragraph_max:
-            separate_tiny += 10
-            aLog.debug(f'Translation chunk was problematic, so separate tiny paragraph vs_tokens_size({separate_tiny})')
-            return self.translate_paragraphs_chunk(tokens_vs_paragraphs, paragraphs, separate_tiny=separate_tiny)
+        if len(chunk) != next_paragraphs_count and next_paragraphs_count > 1:
+            separation_strategy += 1
+            aLog.debug(f'Translation chunk was problematic, lets take less paragraphs {next_paragraphs_count} -> {int(next_paragraphs_count / separation_strategy)}')
+            return self.translate_paragraphs_chunk(tokens_vs_paragraphs, paragraphs, separation_strategy=separation_strategy)
+        if len(chunk) != next_paragraphs_count:
+            chunk = [' '.join(chunk)]
         return chunk, next_paragraphs_count
 
     @staticmethod
-    def count_paragraphs_vs_tokens(elements: list[int], limit: int, separate_tiny: int) -> int:
-        no_sum = 0
-        for ix, no in enumerate(elements):
-            no_sum += no
-            if limit < no_sum or (0 < separate_tiny < no_sum):
+    def count_paragraphs_vs_tokens(tokens_vs_paragraphs: list[int], tokens_limit: int) -> int:
+        tokens_sum = 0
+        for ix, no in enumerate(tokens_vs_paragraphs):
+            tokens_sum += no
+            if tokens_limit < tokens_sum:
                 return 1 if ix < 1 else ix
-        return len(elements)
+        return len(tokens_vs_paragraphs)
 
     def prompt_max_length(self) -> int:
         prompt_empty = self.prompter.prompt(''.join(['', '']), self.special_words, self.names)

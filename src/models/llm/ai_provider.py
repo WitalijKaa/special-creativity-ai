@@ -14,11 +14,11 @@ class AiProvider(AiProviderBase):
         return self
 
     def translate_rus_to_eng(self, text: list[str]) -> list[str]:
-        self.init_ai()
+        self.init_llm()
         self.prompter = PromptServiceSlavicToEng
         return self.translate_paragraphs(text)
 
     def translate_eng_to_rus(self, text: list[str]) -> list[str]:
-        self.init_ai()
+        self.init_llm()
         self.prompter = PromptServiceEngToSlavic
         return self.translate_paragraphs(text)
