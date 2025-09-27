@@ -15,10 +15,20 @@ class AiProvider(AiProviderBase):
 
     def translate_rus_to_eng(self, text: list[str]) -> list[str]:
         self.init_llm()
-        self.prompter = PromptServiceSlavicToEng
+        self.prompter = PromptServiceSlavicToEng()
         return self.translate_paragraphs(text)
 
     def translate_eng_to_rus(self, text: list[str]) -> list[str]:
         self.init_llm()
-        self.prompter = PromptServiceEngToSlavic
+        self.prompter = PromptServiceEngToSlavic()
+        return self.translate_paragraphs(text)
+
+    def translate_eng_to_ukr(self, text: list[str]) -> list[str]:
+        self.init_llm()
+        self.prompter = PromptServiceEngToSlavic('Ukrainian')
+        return self.translate_paragraphs(text)
+
+    def translate_eng_to_srb(self, text: list[str]) -> list[str]:
+        self.init_llm()
+        self.prompter = PromptServiceEngToSlavic('Serbian')
         return self.translate_paragraphs(text)

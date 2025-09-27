@@ -2,8 +2,11 @@ from src.models.services.prompt.abstract_prompt import AbstractTranslateService
 
 
 class PromptServiceSlavicToEng(AbstractTranslateService):
+    def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+        return self.prompt_by_lang(text, special_words, names)
+
     @classmethod
-    def prompt(cls, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+    def prompt_by_lang(cls, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
         single_paragraph = cls.is_single_paragraph(text)
         system_content = (
             'You are a professional translator from Slavic languages into English.\n' +

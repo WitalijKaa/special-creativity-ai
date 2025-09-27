@@ -2,8 +2,7 @@ from src.middleware.llm import LlmModelMiddleware
 
 
 class AbstractTranslateService:
-    @staticmethod
-    def prompt(text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+    def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
         raise NotImplementedError('AbstractTranslateService must implement prompt()')
 
     @staticmethod

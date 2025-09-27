@@ -16,3 +16,11 @@ def action_translate_eng(chapter: Chapter) -> str:
 def action_translate_rus(chapter: Chapter) -> str:
     translation = ai.with_special_words(chapter.special_words).with_names(chapter.names).translate_eng_to_rus(raw_text_to_llm(chapter.text))
     return translation_to_raw_text(translation)
+
+def action_translate_ukr(chapter: Chapter) -> str:
+    translation = ai.with_special_words(chapter.special_words).with_names(chapter.names).translate_eng_to_ukr(raw_text_to_llm(chapter.text))
+    return translation_to_raw_text(translation)
+
+def action_translate_srb(chapter: Chapter) -> str:
+    translation = ai.with_special_words(chapter.special_words).with_names(chapter.names).translate_eng_to_srb(raw_text_to_llm(chapter.text))
+    return translation_to_raw_text(translation)

@@ -22,6 +22,24 @@ ai_models = {
         'id': 'microsoft/Phi-3.5-mini-instruct',
         'max_tokens': 1800,
     },
+    'britain': { # https://huggingface.co/stabilityai/StableBeluga-7B
+        'id': 'stabilityai/StableBeluga-7B',
+        'max_tokens': 1800,
+
+        # stabilityai/StableBeluga-13B
+    },
+    'russia': { # https://huggingface.co/t-tech/T-lite-it-1.0
+        'id': 't-tech/T-lite-it-1.0',
+        'max_tokens': 1800,
+    },
+    'europa': { # https://huggingface.co/utter-project/EuroLLM-9B-Instruct
+        'id': 'utter-project/EuroLLM-9B-Instruct',
+        'max_tokens': 1800,
+    },
+    'slavic': {  # https://huggingface.co/IlyaGusev/saiga_llama3_8b
+        'id': 'IlyaGusev/saiga_llama3_8b',
+        'max_tokens': 1800,
+    },
 }
 
 class LlmModelMiddleware:
