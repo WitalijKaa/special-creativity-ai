@@ -26,4 +26,4 @@ class PromptServiceEngToSlavic(AbstractTranslateService):
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:
-        return 0.5, 1.8
+        return 0.2, 1.8

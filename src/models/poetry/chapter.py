@@ -1,8 +1,39 @@
 from pydantic import BaseModel
-from src.models.poetry.poetry_word_llm import PoetryWordLlm
+import config
+from src.models.poetry.poetry_word import PoetryWord
 
 
 class Chapter(BaseModel):
     text: str
-    special_words: list[PoetryWordLlm]
+    special_words: list[PoetryWord]
     names: list[str]
+
+    _portion_len: int
+    _portion_origin: None | list[str] = None
+    _portion_redacted: list[str] = []
+
+    def portion_of_text(self) -> list[str]:
+        if self._portion_origin is None:
+            self._portion_len = config.llm_paragraphs_amount
+            self._portion_origin = self.raw_text_to_paragraphs(self.text)
+        portion_ix = len(self._portion_redacted)
+        return self._portion_origin[portion_ix:portion_ix + self._portion_len]
+
+    def next_portion(self) -> list[str]:
+        portion_ix = len(self._portion_redacted)
+        return self._portion_origin[portion_ix + self._portion_len:portion_ix + self._portion_len + self._portion_len]
+
+    def add_redacted(self, text: list[str]):
+        self._portion_redacted.extend(text)
+
+    def get_redacted(self, separator: str) -> str:
+        return separator.join(self._portion_redacted)
+
+    @staticmethod
+    def raw_text_to_paragraphs(text: str) -> list[str]:
+        return [p.strip() for p in text.split("\n") if p.strip()]
+
+    @staticmethod
+    def paragraphs_to_raw_text(translation: list[str]) -> str:
+        translation = [' '.join(p.splitlines()).strip() for p in translation if p.strip()]
+        return "\n".join(translation)

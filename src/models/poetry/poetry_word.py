@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class PoetryWordLlm(BaseModel):
+class PoetryWord(BaseModel):
     slavic: str
     english: str
     definition: str

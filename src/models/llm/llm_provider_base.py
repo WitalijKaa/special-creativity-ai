@@ -14,21 +14,51 @@ from src.middleware.llm import LlmModelMiddleware
 from src.models.services.prompt.abstract_prompt import AbstractTranslateService
 
 
-class AiProviderBase:
-    def __init__(self):
-        self.hf_auth: str = AuthMiddleware.hugging_face_token()
-        self.model_id: str = LlmModelMiddleware.get_config()
-        self.llm: PreTrainedModel | None = None
-        self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None = None
-        self.prompter: AbstractTranslateService | None = None
+class LlmProviderBase:
+    hf_auth: str
+    model_id: str
+    llm: PreTrainedModel | None
+    tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None
+    prompter: AbstractTranslateService | None
+    text_separ: str
+    tokens_small_paragraph_max: int
+    tokens_prefix: int
+    tokens_maxima: int
+    special_words: list[tuple[str, str]]
+    names: list[str]
+
+    def init_provider(self):
+        self.hf_auth = AuthMiddleware.hugging_face_token()
+        self.model_id = LlmModelMiddleware.get_config()
+        self.llm = None
+        self.tokenizer = None
+        self.prompter = None
         self.text_separ = LlmModelMiddleware.text_separ() * 4
         self.tokens_small_paragraph_max = 20
 
         self.tokens_prefix = 0
         self.tokens_maxima = 42
 
-        self.special_words: list[tuple[str, str]] = []
-        self.names: list[str] = []
+        self.special_words = []
+        self.names = []
+
+    def improve_paragraphs(self, text: list[str]) -> list[str]:
+        self.tokens_prefix = self.prompt_max_length()
+        sum_tokens = sum([self.count_tokens_of_text(paragraph) for paragraph in text])
+        aLog.debug(f'Improve chunk {len(text)} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
+        piping = LlmPipeMiddleware.get_config().calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
+        prompt = self.prompter.prompt(self.text_separ.join(text), self.special_words, self.names)
+        chunk = self.answer_vs_prompt(prompt, piping.config())
+        sum_tokens = self.count_tokens_of_text(chunk)
+        chunk = self.split_chunk_to_paragraphs(chunk)
+        aLog.debug(f'Improve chunk ( {len(text)} -> {len(chunk)} ) Done tokens({sum_tokens})')
+        if len(chunk) > len(text):
+            joined = chunk[:len(text) - 1]
+            joined.append(' '.join(chunk[len(text) - 1:]))
+            chunk = joined
+        elif len(chunk) < len(text):
+            chunk.extend(['PARAGRAPH REQUIRES MANUAL EDITING FROM THE TOP'] * (len(text) - len(chunk)))
+        return chunk
 
     def translate_paragraphs(self, text: list[str]) -> list[str]:
         self.tokens_prefix = self.prompt_max_length()
@@ -44,16 +74,17 @@ class AiProviderBase:
 
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
         piping = LlmPipeMiddleware.get_config()
-        next_paragraphs_count_original = AiProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
-        next_paragraphs_count = AiProviderBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
+        next_paragraphs_count_original = LlmProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
+        next_paragraphs_count = LlmProviderBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
         aLog.debug(f'Translation chunk {next_paragraphs_count} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
         piping.calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
         prompt = self.prompter.prompt(self.text_separ.join(next_text), self.special_words, self.names)
         chunk = self.answer_vs_prompt(prompt, piping.config())
+        sum_tokens = self.count_tokens_of_text(chunk)
         chunk = self.split_chunk_to_paragraphs(chunk)
-        aLog.debug(f'Translation chunk ( {next_paragraphs_count} -> {len(chunk)} ) Done tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix}) {chunk}')
+        aLog.debug(f'Translation chunk ( {next_paragraphs_count} -> {len(chunk)} ) Done tokens({sum_tokens}) {chunk}')
         if len(chunk) != next_paragraphs_count and next_paragraphs_count > 1:
             separation_strategy += 1 if separation_strategy < 3 else 2
             aLog.debug(f'Translation chunk was problematic, separating paragraphs {next_paragraphs_count} -> {int(next_paragraphs_count_original / separation_strategy)}')

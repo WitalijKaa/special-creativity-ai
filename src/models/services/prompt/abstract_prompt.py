@@ -5,6 +5,9 @@ class AbstractTranslateService:
     def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
         raise NotImplementedError('AbstractTranslateService must implement prompt()')
 
+    def with_next_context(self, text: list[str]):
+        raise NotImplementedError('AbstractTranslateService must implement with_next_context()')
+
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:
         raise NotImplementedError('AbstractTranslateService must implement min_max_multiplicator()')
@@ -22,6 +25,12 @@ class AbstractTranslateService:
         if not single_paragraph:
             return ('Strictly keep every separator ' + LlmModelMiddleware.text_separ() + ' in the translation exactly as in the source text. '
                     'Never change the separator itself.\n')
+        return ''
+
+    @staticmethod
+    def rule_separators_soft(single_paragraph: bool) -> str:
+        if not single_paragraph:
+            return 'Try to keep every separator ' + LlmModelMiddleware.text_separ() + ' in the translation the same as in the source text.\n'
         return ''
 
     @staticmethod
@@ -46,6 +55,13 @@ class AbstractTranslateService:
             return ''
         return ('These names appear in the text; consider it as just names:\n'
                 + '\n'.join([f"{name}" for name in names]) + '\n')
+
+    @staticmethod
+    def rule_next_context(paragraphs: list[str]) -> str:
+        if not len(paragraphs):
+            return ''
+        return ('Here is what happens after the part of the story you need to improve. Just use it as context, do not improve it and do not respond with this text:\n'
+                + '\n'.join([f"{name}" for name in paragraphs]) + '\n')
 
     @classmethod
     def prompt_structure(cls, system_content: str, user_content: str) -> list[dict]:
