@@ -27,7 +27,7 @@ class Chapter(BaseModel):
         self._portion_redacted.extend(text)
 
     def get_redacted(self, separator: str) -> str:
-        return separator.join(self._portion_redacted)
+        return separator.join([' '.join(p.splitlines()).strip() for p in self._portion_redacted if p.strip()])
 
     @staticmethod
     def raw_text_to_paragraphs(text: str) -> list[str]:

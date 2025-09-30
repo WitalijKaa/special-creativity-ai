@@ -1,42 +1,43 @@
 import config
+from src.models.llm.llm_local_models import LlmModelNick
 
 ai_models = {
-    'meta': {
+    LlmModelNick.meta: {
         'id': 'meta-llama/Meta-Llama-3.1-8B-Instruct',
         'max_tokens': 1950,
     },
-    'china': {
+    LlmModelNick.china: {
         'id': 'Qwen/Qwen2.5-7B-Instruct',
         'max_tokens': 2050,
     },
-    'france': {
+    LlmModelNick.france: {
         'id': 'mistralai/Mistral-7B-Instruct-v0.3',
         'max_tokens': 2600,
     },
-    'google': {
+    LlmModelNick.google: {
         'id': 'google/gemma-7b-it',
         'max_tokens': 1800,
         'only_user_role': True,
     },
-    'microsoft': {
+    LlmModelNick.microsoft: {
         'id': 'microsoft/Phi-3.5-mini-instruct',
         'max_tokens': 1800,
     },
-    'britain': { # https://huggingface.co/stabilityai/StableBeluga-7B
+    LlmModelNick.britain: { # https://huggingface.co/stabilityai/StableBeluga-7B
         'id': 'stabilityai/StableBeluga-7B',
         'max_tokens': 1800,
 
         # stabilityai/StableBeluga-13B
     },
-    'russia': { # https://huggingface.co/t-tech/T-lite-it-1.0
+    LlmModelNick.russia: { # https://huggingface.co/t-tech/T-lite-it-1.0
         'id': 't-tech/T-lite-it-1.0',
         'max_tokens': 1800,
     },
-    'europa': { # https://huggingface.co/utter-project/EuroLLM-9B-Instruct
+    LlmModelNick.europa: { # https://huggingface.co/utter-project/EuroLLM-9B-Instruct
         'id': 'utter-project/EuroLLM-9B-Instruct',
         'max_tokens': 1800,
     },
-    'slavic': {  # https://huggingface.co/IlyaGusev/saiga_llama3_8b
+    LlmModelNick.slavic: {  # https://huggingface.co/IlyaGusev/saiga_llama3_8b
         'id': 'IlyaGusev/saiga_llama3_8b',
         'max_tokens': 1800,
     },
@@ -44,7 +45,7 @@ ai_models = {
 
 class LlmModelMiddleware:
     @staticmethod
-    def handle(llm_id: str):
+    def handle(llm_id: LlmModelNick):
         config.llm_id = llm_id
 
     @staticmethod

@@ -1,4 +1,4 @@
-from src.controllers.requests.request_ai import RequestAi
+from src.requests.request_ai import RequestAi
 from src.models.poetry.chapter import Chapter
 
 
