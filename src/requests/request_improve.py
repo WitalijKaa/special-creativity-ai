@@ -1,7 +1,7 @@
-from src.requests.request_ai import RequestAi
+from pydantic import BaseModel
 from src.models.poetry.chapter import Chapter
 
 
-class RequestImprove(RequestAi):
+class RequestImprove(BaseModel):
     content: Chapter
     separator: str

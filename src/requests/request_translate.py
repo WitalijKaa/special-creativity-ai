@@ -1,6 +1,6 @@
-from src.requests.request_ai import RequestAi
+from pydantic import BaseModel
 from src.models.poetry.chapter import Chapter
 
 
-class RequestTranslate(RequestAi):
+class RequestTranslate(BaseModel):
     content: Chapter

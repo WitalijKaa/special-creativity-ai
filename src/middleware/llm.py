@@ -23,7 +23,7 @@ ai_models = {
         'id': 'microsoft/Phi-3.5-mini-instruct',
         'max_tokens': 1800,
     },
-    LlmModelNick.britain: { # https://huggingface.co/stabilityai/StableBeluga-7B
+    LlmModelNick.britain: { # NOT WORKING !!!! # https://huggingface.co/stabilityai/StableBeluga-7B
         'id': 'stabilityai/StableBeluga-7B',
         'max_tokens': 1800,
 
@@ -33,7 +33,7 @@ ai_models = {
         'id': 't-tech/T-lite-it-1.0',
         'max_tokens': 1800,
     },
-    LlmModelNick.europa: { # https://huggingface.co/utter-project/EuroLLM-9B-Instruct
+    LlmModelNick.europa: { # NOT WORKING !!!! # https://huggingface.co/utter-project/EuroLLM-9B-Instruct
         'id': 'utter-project/EuroLLM-9B-Instruct',
         'max_tokens': 1800,
     },
