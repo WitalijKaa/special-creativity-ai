@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from src.models.llm.llm_local_models import LlmModelNick
+from src.models.llm.llm_model_nick import LlmModelNick
 
 
 class HeadersLlm(BaseModel):

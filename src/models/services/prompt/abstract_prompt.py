@@ -1,9 +1,18 @@
 from src.middleware.llm import LlmModelMiddleware
+from src.models.poetry.poetry_word import PoetryWord
 
 
-class AbstractTranslateService:
-    def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+class AbstractPromptService:
+    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
         raise NotImplementedError('AbstractTranslateService must implement prompt()')
+
+    @classmethod
+    def system_prompt(cls, text: str, special_words: list[PoetryWord], names: list[str]) -> str:
+        raise NotImplementedError('AbstractTranslateService must implement system_prompt()')
+
+    @classmethod
+    def user_prompt(cls, text: str) -> str:
+        raise NotImplementedError('AbstractTranslateService must implement user_prompt()')
 
     def with_next_context(self, text: list[str]):
         raise NotImplementedError('AbstractTranslateService must implement with_next_context()')
@@ -44,10 +53,10 @@ class AbstractTranslateService:
                 'Never break the rule for separator ' + LlmModelMiddleware.text_separ() + ' during the process of improving the text.\n')
 
     @staticmethod
-    def rule_special_words(special_words: list[tuple[str, str]], prefix: str) -> str:
+    def rule_special_words(special_words: list[PoetryWord], prefix: str) -> str:
         if not len(special_words):
             return ''
-        return prefix + '\n' + '\n'.join([f"{from_word} -> {to_word}" for from_word, to_word in special_words]) + '\n'
+        return prefix + '\n' + '\n'.join([f"{word.slavic} -> {word.english}" for word in special_words]) + '\n'
 
     @staticmethod
     def rule_names(names: list[str]) -> str:

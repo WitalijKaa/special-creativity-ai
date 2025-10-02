@@ -2,7 +2,6 @@ from src.helpers.php_wk import *
 from src.middleware.pipe import LlmPipeMiddleware
 from src.models.basic_logger import aLog
 import gc
-import re
 import torch
 from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, pipeline
 from transformers import PreTrainedTokenizerFast
@@ -11,15 +10,15 @@ from transformers.modeling_utils import PreTrainedModel
 
 from src.middleware.auth import AuthMiddleware
 from src.middleware.llm import LlmModelMiddleware
-from src.models.services.prompt.abstract_prompt import AbstractTranslateService
+from src.models.services.prompt.abstract_prompt import AbstractPromptService
 
 
-class LlmProviderBase:
+class LlmVideoCardBase:
     hf_auth: str
     model_id: str
     llm: PreTrainedModel | None
     tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast | None
-    prompter: AbstractTranslateService | None
+    prompter: AbstractPromptService | None
     text_separ: str
     tokens_small_paragraph_max: int
     tokens_prefix: int
@@ -52,12 +51,6 @@ class LlmProviderBase:
         sum_tokens = self.count_tokens_of_text(chunk)
         chunk = self.split_chunk_to_paragraphs(chunk)
         aLog.debug(f'Improve chunk ( {len(text)} -> {len(chunk)} ) Done tokens({sum_tokens})')
-        if len(chunk) > len(text):
-            joined = chunk[:len(text) - 1]
-            joined.append(' '.join(chunk[len(text) - 1:]))
-            chunk = joined
-        elif len(chunk) < len(text):
-            chunk.extend(['PARAGRAPH REQUIRES MANUAL EDITING FROM THE TOP'] * (len(text) - len(chunk)))
         return chunk
 
     def translate_paragraphs(self, text: list[str]) -> list[str]:
@@ -74,8 +67,8 @@ class LlmProviderBase:
 
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
         piping = LlmPipeMiddleware.get_config()
-        next_paragraphs_count_original = LlmProviderBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
-        next_paragraphs_count = LlmProviderBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
+        next_paragraphs_count_original = LlmVideoCardBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
+        next_paragraphs_count = LlmVideoCardBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
         next_text = paragraphs[:next_paragraphs_count]
         sum_tokens = sum(tokens_vs_paragraphs[:next_paragraphs_count])
         aLog.debug(f'Translation chunk {next_paragraphs_count} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
@@ -92,6 +85,9 @@ class LlmProviderBase:
         if len(chunk) != next_paragraphs_count:
             chunk = [' '.join(chunk)]
         return chunk, next_paragraphs_count
+
+    def split_chunk_to_paragraphs(self, chunk: str) -> list[str]:
+        raise NotImplementedError('Use split_chunk_to_paragraphs() from LlmPoetryCore or implement')
 
     @staticmethod
     def count_paragraphs_vs_tokens(tokens_vs_paragraphs: list[int], tokens_limit: int) -> int:
@@ -116,14 +112,6 @@ class LlmProviderBase:
 
     def count_tokens_of_text(self, text: str) -> int:
         return len(self.tokenizer.encode(text, add_special_tokens=False))
-
-    def split_chunk_to_paragraphs(self, chunk: str) -> list[str]:
-        separ_sign = self.text_separ[0]
-        if separ_sign in chunk:
-            chunk = re.sub(re.escape(separ_sign) + '+', separ_sign, chunk)
-            return [paragraph.strip() for paragraph in chunk.split(separ_sign) if paragraph.strip()]
-        else:
-            return [paragraph.strip() for paragraph in chunk.splitlines() if paragraph.strip()]
 
     def answer_vs_prompt(self, prompt: list[dict], pipe_config: dict) -> str:
         prompt_llm = self.tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)

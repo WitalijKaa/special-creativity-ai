@@ -3,7 +3,7 @@ from fastapi import FastAPI, Header, Request, HTTPException
 from src.controllers.poetry.redactor import action_make_text_better
 from src.middleware.llm import LlmModelMiddleware
 from src.middleware.pipe import LlmPipeMiddleware
-from src.models.llm.llm_local_models import LlmModelNick
+from src.models.llm.llm_model_nick import LlmModelNick
 from src.requests.headers_llm import HeadersLlm
 from src.requests.request_improve import RequestImprove
 from src.controllers.poetry.translate import action_translate_rus, action_translate_eng, action_translate_ukr, action_translate_srb

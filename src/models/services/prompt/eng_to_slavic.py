@@ -1,15 +1,16 @@
-from src.models.services.prompt.abstract_prompt import AbstractTranslateService
+from src.models.poetry.poetry_word import PoetryWord
+from src.models.services.prompt.abstract_prompt import AbstractPromptService
 
 
-class PromptServiceEngToSlavic(AbstractTranslateService):
+class PromptServiceEngToSlavic(AbstractPromptService):
     def __init__(self, slavic_lang: str = 'Russian'):
         self.slavic_lang = slavic_lang
 
-    def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
         return self.prompt_by_lang(text, special_words, names, self.slavic_lang)
 
     @classmethod
-    def prompt_by_lang(cls, text: str, special_words: list[tuple[str, str]], names: list[str], slavic_lang: str = 'Russian') -> list[dict]:
+    def prompt_by_lang(cls, text: str, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> list[dict]:
         single_paragraph = cls.is_single_paragraph(text)
         system_content = (
             f'You are a professional translator from English into {slavic_lang}.\n' +

@@ -1,7 +1,21 @@
 import config
-from src.models.llm.llm_local_models import LlmModelNick
+from src.models.llm.llm_model_nick import LlmModelNick
 
 ai_models = {
+    LlmModelNick.gpt_best: {
+        'vs_api': True,
+        'id': 'gpt-5',
+    },
+    LlmModelNick.gpt_mini: {
+        'vs_api': True,
+        'id': 'gpt-5-mini',
+    },
+    LlmModelNick.gpt_nano: {
+        'vs_api': True,
+        'id': 'gpt-5-nano',
+    },
+
+#gpt-5-nano
     LlmModelNick.meta: {
         'id': 'meta-llama/Meta-Llama-3.1-8B-Instruct',
         'max_tokens': 1950,
@@ -49,6 +63,10 @@ class LlmModelMiddleware:
         config.llm_id = llm_id
 
     @staticmethod
+    def is_api_llm() -> str:
+        return ai_models[config.llm_id].get('vs_api') is True
+
+    @staticmethod
     def get_config() -> str:
         return ai_models[config.llm_id]['id']
 
@@ -57,7 +75,7 @@ class LlmModelMiddleware:
         return '#'
 
     @staticmethod
-    def max_tokens() -> str:
+    def max_tokens() -> int:
         return ai_models[config.llm_id]['max_tokens']
 
     @staticmethod

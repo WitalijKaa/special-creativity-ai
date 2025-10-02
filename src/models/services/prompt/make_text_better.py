@@ -1,13 +1,14 @@
-from src.models.services.prompt.abstract_prompt import AbstractTranslateService
+from src.models.poetry.poetry_word import PoetryWord
+from src.models.services.prompt.abstract_prompt import AbstractPromptService
 
 
-class PromptServiceMakeTextBetter(AbstractTranslateService):
+class PromptServiceMakeTextBetter(AbstractPromptService):
     _next_context: list[str]
 
     def with_next_context(self, text: list[str]):
         self._next_context = text
 
-    def prompt(self, text: str, special_words: list[tuple[str, str]], names: list[str]) -> list[dict]:
+    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
         return self.prompt_of_redactor(text, names, self._next_context)
 
     @classmethod
