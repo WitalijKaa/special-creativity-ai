@@ -11,5 +11,6 @@ rich
 openai
 transformers
 accelerate
-bitsandbytes
-sentencepiece
+bitsandbytes==0.47.*
+sentencepiece==0.2.*
+protobuf==6.32.*
