@@ -11,8 +11,12 @@ class PromptServiceEngToSlavic(AbstractPromptService):
 
     @classmethod
     def prompt_by_lang(cls, text: str, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> list[dict]:
+        return cls.prompt_structure(cls.system_prompt(text, special_words, names, slavic_lang), cls.user_prompt(text))
+
+    @classmethod
+    def system_prompt(cls, text: str, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> str:
         single_paragraph = cls.is_single_paragraph(text)
-        system_content = (
+        return (
             f'You are a professional translator from English into {slavic_lang}.\n' +
             cls.rule_separators(single_paragraph) +
             cls.rule_improve(single_paragraph) +
@@ -21,9 +25,10 @@ class PromptServiceEngToSlavic(AbstractPromptService):
             f'Translate from English into {slavic_lang}.\n'
             f'Answer only in {slavic_lang}, and only translated text.'
         )
-        user_content = 'Translate:\n' + text
 
-        return cls.prompt_structure(system_content, user_content)
+    @classmethod
+    def user_prompt(cls, text: str) -> str:
+        return 'Translate:\n' + text
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:

@@ -13,17 +13,22 @@ class PromptServiceMakeTextBetter(AbstractPromptService):
 
     @classmethod
     def prompt_of_redactor(cls, text: str, names: list[str], next_context: list[str]) -> list[dict]:
+        return cls.prompt_structure(cls.system_prompt(text, names, next_context), cls.user_prompt(text))
+
+    @classmethod
+    def system_prompt(cls, text: str, names: list[str], next_context: list[str]) -> str:
         single_paragraph = cls.is_single_paragraph(text)
-        system_content = (
+        return (
             'You are a professional redactor of text. Help a aspiring writer by editing and rewriting their text as if it were written by the great writer Jack London. Maintain a realistic and naturalistic style. Change anything you deem necessary to make great story, but keep the idea of the original script.\n' +
             cls.rule_separators_soft(single_paragraph) +
             cls.rule_names(names) +
             cls.rule_next_context(next_context) +
             'Answer only in English.'
         )
-        user_content = 'Text (story) to improve:\n' + text
 
-        return cls.prompt_structure(system_content, user_content)
+    @classmethod
+    def user_prompt(cls, text: str) -> str:
+        return 'Translate:\n' + text
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:

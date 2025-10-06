@@ -5,7 +5,10 @@ from openai import OpenAI
 from src.middleware.pipe import LlmPipeMiddleware
 from src.models.basic_logger import aLog
 from src.models.llm.llm_poetry_core import LlmPoetryCore
+from src.models.poetry.chapter import Chapter
 from src.models.services.prompt.abstract_prompt import AbstractPromptService
+from src.models.services.prompt.eng_to_slavic import PromptServiceEngToSlavic
+from src.models.services.prompt.make_text_better import PromptServiceMakeTextBetter
 from src.models.services.prompt.slavic_to_eng import PromptServiceSlavicToEng
 
 
@@ -29,11 +32,28 @@ class LlmGpt(LlmPoetryCore):
         self.special_words = []
         self.names = []
 
+    def make_text_better(self, chapter: Chapter):
+        self.prompter = PromptServiceMakeTextBetter()
+        redacted = self.request_paragraphs(Chapter.raw_text_to_paragraphs(chapter.text))
+        chapter.add_redacted(redacted)
+
     def translate_rus_to_eng(self, text: list[str]) -> list[str]:
         self.prompter = PromptServiceSlavicToEng()
-        return self.translate_paragraphs(text)
+        return self.request_paragraphs(text)
 
-    def response_config(self) -> dict:
+    def translate_eng_to_rus(self, text: list[str]) -> list[str]:
+        self.prompter = PromptServiceEngToSlavic()
+        return self.request_paragraphs(text)
+
+    def translate_eng_to_ukr(self, text: list[str]) -> list[str]:
+        self.prompter = PromptServiceEngToSlavic('Ukrainian')
+        return self.request_paragraphs(text)
+
+    def translate_eng_to_srb(self, text: list[str]) -> list[str]:
+        self.prompter = PromptServiceEngToSlavic('Serbian')
+        return self.request_paragraphs(text)
+
+    def request_config(self) -> dict:
         piping = LlmPipeMiddleware.get_config()
         config = {
             'model': self.model_id,
@@ -43,12 +63,16 @@ class LlmGpt(LlmPoetryCore):
         config.update(piping.config())
         return config # text={"verbosity": "low"}, # how long the answer should be
 
-    def translate_paragraphs(self, text: list[str]) -> list[str]:
-        aLog.debug(f'GPT Translation paragraphs {len(text)} Start')
-        text_raw = self.text_separ.join(text)
-        config = self.response_config()
-        config.update({'instructions': self.prompter.system_prompt(text_raw, self.special_words, self.names)})
-        config.update({'input': text_raw})
+    def request_prompt(self, text: str) -> dict:
+        return {
+            'instructions': self.prompter.system_prompt(text, self.special_words, self.names),
+            'input': text,
+        }
+
+    def request_paragraphs(self, text: list[str]) -> list[str]:
+        aLog.debug(f'GPT paragraphs {len(text)} Start')
+        config = self.request_config()
+        config.update(self.request_prompt(self.text_separ.join(text)))
         response = self.client_gpt.responses.create(**config)
         aLog.debug(f'GPT RESPONSE {response}')
         chunk = self.split_chunk_to_paragraphs(response.output_text)

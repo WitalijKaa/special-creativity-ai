@@ -11,20 +11,18 @@ class LlmPipeGptParams(PipeBase):
     # TEMPERATURE
 
     def temperature_secured(self):
-        self.temperature = 0.8
+        self.temperature = 0.0
 
     def temperature_normal(self):
-        self.temperature = 1.0
+        self.temperature = 0.36
 
     def temperature_medium(self):
-        print('temperature_medium')
-        if self.temperature > 0.9995:
-            self.temperature = 2.0
+        if self.temperature > 0.1:
+            self.temperature = 0.88
 
     def temperature_high(self):
-        print('temperature_high')
-        if self.temperature > 0.9995:
-            self.temperature = 5.0
+        if self.temperature > 0.1:
+            self.temperature = 1.42
 
     # QUALITY
 
@@ -40,6 +38,6 @@ class LlmPipeGptParams(PipeBase):
     def config(self) -> dict:
         config = {
             'reasoning': {"effort": self.quality_reasoning},
-            'temperature': self.temperature,
+            # GPT-5 cant do it 'temperature': self.temperature,
         }
         return config

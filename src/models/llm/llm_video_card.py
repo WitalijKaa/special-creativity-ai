@@ -1,5 +1,6 @@
 from src.models.llm.llm_poetry_core import LlmPoetryCore
 from src.models.llm.llm_video_card_base import LlmVideoCardBase
+from src.models.poetry.chapter import Chapter
 from src.models.services.prompt.abstract_prompt import AbstractPromptService
 from src.models.services.prompt.eng_to_slavic import PromptServiceEngToSlavic
 from src.models.services.prompt.make_text_better import PromptServiceMakeTextBetter
@@ -9,8 +10,13 @@ from src.models.services.prompt.slavic_to_eng import PromptServiceSlavicToEng
 class LlmVideoCard(LlmPoetryCore, LlmVideoCardBase):
     prompter: AbstractPromptService | None
 
-    def make_text_better(self, text: list[str], text_next: list[str]) -> list[str]:
+    def make_text_better(self, chapter: Chapter):
         self.init_llm()
+        while len(chapter.portion_of_text()) > 0:
+            redacted = self.make_text_portion_better(chapter.portion_of_text(), chapter.next_portion())
+            chapter.add_redacted(redacted)
+
+    def make_text_portion_better(self, text: list[str], text_next: list[str]) -> list[str]:
         self.prompter = PromptServiceMakeTextBetter()
         self.prompter.with_next_context(text_next)
         chunk = self.improve_paragraphs(text)
