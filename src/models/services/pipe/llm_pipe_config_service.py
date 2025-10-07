@@ -6,4 +6,4 @@ from src.models.services.pipe.pipe_params import LlmPipeParams
 class LlmPipeConfigService:
     @staticmethod
     def get_config() -> LlmPipeParams:
-        return LlmPipeMiddleware.get_config()
+        return LlmPipeMiddleware.configurator()

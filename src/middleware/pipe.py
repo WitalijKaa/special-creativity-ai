@@ -10,7 +10,7 @@ class LlmPipeMiddleware:
         config.llm_mode = pipe_config
 
     @staticmethod
-    def get_config() -> LlmPipeParams | LlmPipeGptParams:
+    def configurator() -> LlmPipeParams | LlmPipeGptParams:
         if LlmModelMiddleware.is_api_llm():
             model = LlmPipeGptParams()
         else:

@@ -54,7 +54,7 @@ class LlmGpt(LlmPoetryCore):
         return self.request_paragraphs(text)
 
     def request_config(self) -> dict:
-        piping = LlmPipeMiddleware.get_config()
+        piping = LlmPipeMiddleware.configurator()
         config = {
             'model': self.model_id,
             'service_tier': 'flex',
@@ -63,16 +63,10 @@ class LlmGpt(LlmPoetryCore):
         config.update(piping.config())
         return config # text={"verbosity": "low"}, # how long the answer should be
 
-    def request_prompt(self, text: str) -> dict:
-        return {
-            'instructions': self.prompter.system_prompt(text, self.special_words, self.names),
-            'input': text,
-        }
-
     def request_paragraphs(self, text: list[str]) -> list[str]:
         aLog.debug(f'GPT paragraphs {len(text)} Start')
         config = self.request_config()
-        config.update(self.request_prompt(self.text_separ.join(text)))
+        config.update(self.prompter.prompt(self.text_separ.join(text), self.special_words, self.names))
         response = self.client_gpt.responses.create(**config)
         aLog.debug(f'GPT RESPONSE {response}')
         chunk = self.split_chunk_to_paragraphs(response.output_text)

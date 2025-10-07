@@ -27,7 +27,7 @@ class LlmPipeParams(PipeBase):
 
         self.calculation_branches = 1  # num_beams
         self.repetition_penalty = 1.0  # (if more 1.0 -> reduces probability for repetitive word) (if less 1.0 -> high-up probability for repetitive word)
-        self.long_answer = 1.0  # length_penalty (if more 1.0 -> longer answer)
+        self.long_answer = 0.0  # length_penalty (if more 1.0 -> longer answer)
         # self.no_repeat_phrase_size = 0 # no_repeat_ngram_size
 
         # !! self.vs_temperature = True # do_sample
@@ -71,19 +71,24 @@ class LlmPipeParams(PipeBase):
 
     def quality_medium(self):
         self.calculation_branches = 2
-        self.long_answer = 1.1
         self.repetition_penalty = 1.05
 
     def quality_high(self):
         self.calculation_branches = 3
-        self.long_answer = 1.2
         self.repetition_penalty = 1.05
+
+
+    # OTHER
+
+    def make_text_longer(self):
+        self.long_answer = 1.65
 
 
     # BASE FUNCTIONS
 
     def config(self) -> dict:
         config = {
+            #'use_cache': False,
             'do_sample': self.temperature is not None,
             'repetition_penalty': self.repetition_penalty,
             'length_penalty': self.long_answer,

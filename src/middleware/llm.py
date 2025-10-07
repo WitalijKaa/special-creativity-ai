@@ -63,7 +63,7 @@ class LlmModelMiddleware:
         config.llm_id = llm_id
 
     @staticmethod
-    def is_api_llm() -> str:
+    def is_api_llm() -> bool:
         return ai_models[config.llm_id].get('vs_api') is True
 
     @staticmethod

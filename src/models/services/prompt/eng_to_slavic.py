@@ -7,28 +7,22 @@ class PromptServiceEngToSlavic(AbstractPromptService):
         self.slavic_lang = slavic_lang
 
     def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
-        return self.prompt_by_lang(text, special_words, names, self.slavic_lang)
+        return self.prompt_structure(self.system_prompt(special_words, names, self.slavic_lang), self.user_prompt(text))
 
     @classmethod
-    def prompt_by_lang(cls, text: str, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> list[dict]:
-        return cls.prompt_structure(cls.system_prompt(text, special_words, names, slavic_lang), cls.user_prompt(text))
-
-    @classmethod
-    def system_prompt(cls, text: str, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> str:
-        single_paragraph = cls.is_single_paragraph(text)
+    def system_prompt(cls, special_words: list[PoetryWord], names: list[str], slavic_lang: str = 'Russian') -> str:
         return (
-            f'You are a professional translator from English into {slavic_lang}.\n' +
-            cls.rule_separators(single_paragraph) +
-            cls.rule_improve(single_paragraph) +
-            cls.rule_special_words(special_words, 'The text contains special context words; when translating them, take into account singular and plural forms, but translate them strictly according to this list:') +
-            cls.rule_names(names) +
+            f'You are a professional translator of science-fiction from English into {slavic_lang}.\n' + '\n' +
+            cls.rule_translation_quality() + '\n' +
+            cls.rule_special_words(special_words, 'The text contains special concepts; translate them strictly according to this list:') + '\n' +
+            cls.rule_names(names) + '\n' + '\n' +
             f'Translate from English into {slavic_lang}.\n'
             f'Answer only in {slavic_lang}, and only translated text.'
         )
 
     @classmethod
     def user_prompt(cls, text: str) -> str:
-        return 'Translate:\n' + text
+        return 'Translate one paragraph:\n' + text
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:

@@ -10,6 +10,8 @@ from transformers.modeling_utils import PreTrainedModel
 
 from src.middleware.auth import AuthMiddleware
 from src.middleware.llm import LlmModelMiddleware
+from src.models.poetry.chapter import Chapter
+from src.models.poetry.poetry_word import PoetryWord
 from src.models.services.prompt.abstract_prompt import AbstractPromptService
 
 
@@ -23,7 +25,7 @@ class LlmVideoCardBase:
     tokens_small_paragraph_max: int
     tokens_prefix: int
     tokens_maxima: int
-    special_words: list[tuple[str, str]]
+    special_words: list[PoetryWord]
     names: list[str]
 
     def init_provider(self):
@@ -44,16 +46,18 @@ class LlmVideoCardBase:
     def improve_paragraphs(self, text: list[str]) -> list[str]:
         self.tokens_prefix = self.prompt_max_length()
         sum_tokens = sum([self.count_tokens_of_text(paragraph) for paragraph in text])
-        aLog.debug(f'Improve chunk {len(text)} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
-        piping = LlmPipeMiddleware.get_config().calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
+        aLog.debug(f'LLM-local Improve chunk {len(text)} Start tokens({self.tokens_prefix}+{sum_tokens}={sum_tokens + self.tokens_prefix})')
+        piping = LlmPipeMiddleware.configurator().calculate_tokens(sum_tokens, *self.prompter.min_max_multiplicator())
+        piping.make_text_longer()
         prompt = self.prompter.prompt(self.text_separ.join(text), self.special_words, self.names)
         chunk = self.answer_vs_prompt(prompt, piping.config())
         sum_tokens = self.count_tokens_of_text(chunk)
         chunk = self.split_chunk_to_paragraphs(chunk)
-        aLog.debug(f'Improve chunk ( {len(text)} -> {len(chunk)} ) Done tokens({sum_tokens})')
+        aLog.debug(f'LLM-local Improve chunk ( {len(text)} -> {len(chunk)} ) Done tokens({sum_tokens}) CHUNK {chunk}')
         return chunk
 
-    def translate_paragraphs(self, text: list[str]) -> list[str]:
+    def translate_paragraphs(self, chapter: Chapter) -> list[str]:
+        text = Chapter.raw_text_to_paragraphs(chapter.text)
         self.tokens_prefix = self.prompt_max_length()
         tokens_vs_paragraphs = [self.count_tokens_of_text(paragraph) for paragraph in text]
         response = []
@@ -66,7 +70,7 @@ class LlmVideoCardBase:
         return response
 
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
-        piping = LlmPipeMiddleware.get_config()
+        piping = LlmPipeMiddleware.configurator()
         next_paragraphs_count_original = LlmVideoCardBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)
         next_paragraphs_count = LlmVideoCardBase.use_separation_strategy(separation_strategy, next_paragraphs_count_original)
         next_text = paragraphs[:next_paragraphs_count]
