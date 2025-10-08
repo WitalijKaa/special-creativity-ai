@@ -17,7 +17,7 @@ class PromptServiceEngToSlavic(AbstractPromptService):
             cls.rule_special_words(special_words, 'The text contains special concepts; translate them strictly according to this list:') + '\n' +
             cls.rule_names(names) + '\n' + '\n' +
             f'Translate from English into {slavic_lang}.\n'
-            f'Answer only in {slavic_lang}, and only translated text.'
+            f'Answer only in {slavic_lang}, and only translated text, no additional comments allowed.'
         )
 
     @classmethod
@@ -26,4 +26,4 @@ class PromptServiceEngToSlavic(AbstractPromptService):
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:
-        return 0.2, 1.8
+        return 0.2, 2.5

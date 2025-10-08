@@ -3,26 +3,26 @@ from src.models.services.pipe.pipe_base import PipeBase
 
 class LlmPipeGptParams(PipeBase):
     quality_reasoning: str
+    long_answer: str
 
     def start_config(self):
         self.temperature_secured()
         self.quality_reasoning = 'low'
+        self.long_answer = 'low'
 
     # TEMPERATURE
 
     def temperature_secured(self):
-        self.temperature = 0.0
+        self.long_answer = 'low'
 
     def temperature_normal(self):
-        self.temperature = 0.36
+        self.long_answer = 'low'
 
     def temperature_medium(self):
-        if self.temperature > 0.1:
-            self.temperature = 0.88
+        self.long_answer = 'medium'
 
     def temperature_high(self):
-        if self.temperature > 0.1:
-            self.temperature = 1.42
+        self.long_answer = 'high'
 
     # QUALITY
 
@@ -38,6 +38,6 @@ class LlmPipeGptParams(PipeBase):
     def config(self) -> dict:
         config = {
             'reasoning': {"effort": self.quality_reasoning},
-            # GPT-5 cant do it 'temperature': self.temperature,
+            'text': {'verbosity': self.long_answer},
         }
         return config

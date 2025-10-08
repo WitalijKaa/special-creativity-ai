@@ -3,7 +3,7 @@ from src.models.poetry.poetry_word import PoetryWord
 
 
 class AbstractPromptService:
-    _next_context: list[str]
+    _next_context: list[str] = []
 
     def with_next_context(self, context: list[str]):
         self._next_context = context
@@ -68,13 +68,6 @@ class AbstractPromptService:
             return ''
         return ('These names appear in the text; consider it as just names:\n'
                 + '\n'.join([f"{name}" for name in names]) + '\n')
-
-    @staticmethod
-    def rule_next_context_tiny(paragraphs: list[str]) -> str:
-        if not len(paragraphs):
-            return ''
-        return ('This is a short context for the upcoming paragraphs, use it only to understand the context of the translation:\n'
-                + '\n'.join([f"{text}" for text in paragraphs]) + '\n')
 
     @staticmethod
     def rule_next_context(paragraphs: list[str]) -> str:

@@ -56,6 +56,7 @@ class LlmVideoCardBase:
         aLog.debug(f'LLM-local Improve chunk ( {len(text)} -> {len(chunk)} ) Done tokens({sum_tokens}) CHUNK {chunk}')
         return chunk
 
+    # deprecated
     def translate_paragraphs(self, chapter: Chapter) -> list[str]:
         text = Chapter.raw_text_to_paragraphs(chapter.text)
         self.tokens_prefix = self.prompt_max_length()
@@ -69,6 +70,7 @@ class LlmVideoCardBase:
             response.extend(chunk)
         return response
 
+    # deprecated
     def translate_paragraphs_chunk(self, tokens_vs_paragraphs: list[int], paragraphs: list[str], *, separation_strategy: int = 1) -> tuple[list[str], int]:
         piping = LlmPipeMiddleware.configurator()
         next_paragraphs_count_original = LlmVideoCardBase.count_paragraphs_vs_tokens(tokens_vs_paragraphs, piping.calculate_tokens_maxima(self.tokens_maxima) - self.tokens_prefix)

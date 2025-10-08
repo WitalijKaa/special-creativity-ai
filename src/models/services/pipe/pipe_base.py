@@ -31,17 +31,17 @@ class PipeBase:
             raise NotImplementedError('Unexpected pipe mode')
 
         for mode_param in mode:
-            if mode_param in (MODE_QUALITY_OK, MODE_QUALITY_NICE, MODE_QUALITY_MEGA):
-                if mode_param == MODE_QUALITY_NICE:
-                    self.quality_medium()
-                elif mode_param == MODE_QUALITY_MEGA:
-                    self.quality_high()
-        for mode_param in mode:
             if mode_param in (MODE_CREATIVELY_MORE, MODE_CREATIVELY_INSANE):
                 if mode_param == MODE_CREATIVELY_MORE:
                     self.temperature_medium()
                 elif mode_param == MODE_CREATIVELY_INSANE:
                     self.temperature_high()
+        for mode_param in mode:
+            if mode_param in (MODE_QUALITY_OK, MODE_QUALITY_NICE, MODE_QUALITY_MEGA):
+                if mode_param == MODE_QUALITY_NICE:
+                    self.quality_medium()
+                elif mode_param == MODE_QUALITY_MEGA:
+                    self.quality_high()
 
     def start_config(self):
         raise NotImplementedError('Pipe class must implement start_config()')

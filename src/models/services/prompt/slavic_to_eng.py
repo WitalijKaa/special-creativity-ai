@@ -15,7 +15,7 @@ class PromptServiceSlavicToEng(AbstractPromptService):
             cls.rule_special_words(special_words, 'The text contains new Slavic words; translate them strictly according to this list:') + '\n' +
             cls.rule_names(names) + '\n' + '\n' +
             'Translate from Russian into English.\n'
-            'Answer only in English, and only translated text.'
+            'Answer only in English, and only translated text, no additional comments allowed.'
         )
 
     @classmethod

@@ -16,6 +16,7 @@ class LlmPipeParams(PipeBase):
         return int(video_card_maxima / self.calculation_branches * 1.35)
 
     def calculate_tokens(self, tokens: int, min_mult: float, max_mult: float ):
+        max_mult *= self.long_answer
         self.min_new_tokens = int(tokens * min_mult)
         self.max_new_tokens = int(tokens * max_mult)
         return self
@@ -25,57 +26,71 @@ class LlmPipeParams(PipeBase):
         self.min_new_tokens = None
         self.max_new_tokens = None
 
-        self.calculation_branches = 1  # num_beams
-        self.repetition_penalty = 1.0  # (if more 1.0 -> reduces probability for repetitive word) (if less 1.0 -> high-up probability for repetitive word)
-        self.long_answer = 0.0  # length_penalty (if more 1.0 -> longer answer)
-        # self.no_repeat_phrase_size = 0 # no_repeat_ngram_size
-
-        # !! self.vs_temperature = True # do_sample
-        # !! self.vs_temperature = False # do_sample (DEFAULT)
-
+        self.calculation_branches = 8  # num_beams
         self.temperature = None
+        self.long_answer = 1.0  # length_penalty (if more 1.0 -> longer answer)
+
+        self.repetition_penalty = 1.0  # (if more 1.0 -> reduces probability for repetitive word) (if less 1.0 -> high-up probability for repetitive word)
+        # self.no_repeat_phrase_size = 0 # no_repeat_ngram_size
 
         self.t_variants = None  # top_k (count top variants and use only it)
         # if both: first will get t_variants after will reduce via t_threshold
         self.t_threshold = None  # top_p (sum top variants until this threshold and use them) (1.0 is big, take more words, 0.5 is tiny, take few words)
-        # typical_p maybe...
 
 
     # TEMPERATURE
 
     def temperature_secured(self):
+        self.calculation_branches = 8
         self.temperature = None
+        self.long_answer = 1.0
+        self.repetition_penalty = 1.0
 
     def temperature_normal(self):
-        self.temperature = 0.9
-        self.t_variants = 25
+        self.calculation_branches = 2
+        self.temperature = 0.71
+        self.t_variants = 18
         self.t_threshold = 0.85
-        self.repetition_penalty = 1.05
+        self.long_answer = 1.0
+        self.repetition_penalty = 1.0
 
     def temperature_medium(self):
-        if self.temperature is None:
-            self.temperature = 0.8
-            self.t_variants = 25
-            self.t_threshold = 0.75
-            self.repetition_penalty = 1.1
+        if self.temperature is not None:
+            self.calculation_branches = 2
+            self.temperature = 0.88
+            self.t_variants = 18
+            self.t_threshold = 0.91
+            self.long_answer = 1.8
+            self.repetition_penalty = 1.2
 
     def temperature_high(self):
-        if self.temperature is None:
-            self.temperature = 0.65
-            self.t_variants = 35
+        if self.temperature is not None:
+            self.calculation_branches = 2
+            self.temperature = 0.98
+            self.t_variants = 24
             self.t_threshold = 0.95
-            self.repetition_penalty = 1.1
-
+            self.long_answer = 2.5
+            self.repetition_penalty = 1.5
 
     # QUALITY
 
     def quality_medium(self):
-        self.calculation_branches = 2
-        self.repetition_penalty = 1.05
+        if self.temperature is not None:
+            self.calculation_branches = 3
+            if self.long_answer > 1.0:
+                self.long_answer *= 0.8
+            self.repetition_penalty *= 1.2
+        else:
+            self.calculation_branches = 10
 
     def quality_high(self):
-        self.calculation_branches = 3
-        self.repetition_penalty = 1.05
+        if self.temperature is not None:
+            self.calculation_branches = 4
+            if self.long_answer > 1.0:
+                self.long_answer *= 0.65
+            self.repetition_penalty *= 1.42
+        else:
+            self.calculation_branches = 12
 
 
     # OTHER
@@ -88,11 +103,13 @@ class LlmPipeParams(PipeBase):
 
     def config(self) -> dict:
         config = {
-            #'use_cache': False,
-            'do_sample': self.temperature is not None,
-            'repetition_penalty': self.repetition_penalty,
-            'length_penalty': self.long_answer,
             'num_beams': self.calculation_branches,
+            'do_sample': self.temperature is not None,
+            'length_penalty': self.long_answer,
+            'repetition_penalty': self.repetition_penalty,
+
+            'renormalize_logits': True,
+            'use_cache': True,
         }
         config.update(self.temperature_config())
         if self.min_new_tokens is not None and self.max_new_tokens is not None:
@@ -106,4 +123,6 @@ class LlmPipeParams(PipeBase):
             'temperature': self.temperature,
             'top_k': self.t_variants,
             'top_p': self.t_threshold,
+            'min_p': 0.2,
+            'typical_p': 0.95,
         }
