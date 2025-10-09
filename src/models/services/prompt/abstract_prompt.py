@@ -3,13 +3,23 @@ from src.models.poetry.poetry_word import PoetryWord
 
 
 class AbstractPromptService:
+    _special_words: list[PoetryWord] = []
+    _names: list[str] = []
     _next_context: list[str] = []
+
+    def special_words(self, special_words: list[PoetryWord]):
+        self._special_words = special_words
+        return self
+
+    def names(self, names: list[str]):
+        self._names = names
+        return self
 
     def with_next_context(self, context: list[str]):
         self._next_context = context
 
-    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]|dict:
-        raise NotImplementedError('AbstractTranslateService must implement prompt()')
+    # def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]|dict:
+    #     raise NotImplementedError('AbstractTranslateService must implement prompt()')
 
     @staticmethod
     def min_max_multiplicator() -> tuple[float, float]:
@@ -48,7 +58,7 @@ class AbstractPromptService:
     def rule_special_words_slavic(special_words: list[PoetryWord], prefix: str) -> str:
         if not len(special_words):
             return ''
-        return prefix + '\n' + '\n'.join([f"{word.english} -> {word.slavic}" for word in special_words]) + '\n'
+        return prefix + '\n' + '\n'.join([f"{word.slavic}" for word in special_words])
 
     @staticmethod
     def rule_special_words_list(special_words: list[PoetryWord], prefix: str) -> str:
@@ -70,10 +80,24 @@ class AbstractPromptService:
                 + '\n'.join([f"{name}" for name in names]) + '\n')
 
     @staticmethod
+    def rule_names_final(names: list[str]) -> str:
+        if not len(names):
+            return ''
+        return ('В текста встречаются эти имена, пиши их только английскими буквами как в этом списке:\n'
+                + '\n'.join([f"{name}" for name in names]) + '\n')
+
+    @staticmethod
     def rule_next_context(paragraphs: list[str]) -> str:
         if not len(paragraphs):
             return ''
         return ('Here is what happens after the part of the story you need to improve. Just use it as context, do not improve it and do not respond with this text:\n'
+                + '\n'.join([f"{text}" for text in paragraphs]) + '\n')
+
+    @staticmethod
+    def rule_next_paragraph_to_remove_repeat(paragraphs: list[str]) -> str:
+        if not len(paragraphs):
+            return ''
+        return ('Here is the NEXT paragraph. Any content identical or similar to this must not appear in the original paragraph:\n'
                 + '\n'.join([f"{text}" for text in paragraphs]) + '\n')
 
     @classmethod

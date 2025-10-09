@@ -6,7 +6,7 @@ class PromptServiceEngToSlavic(AbstractPromptService):
     def __init__(self, slavic_lang: str = 'Russian'):
         self.slavic_lang = slavic_lang
 
-    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
+    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]|dict:
         return self.prompt_structure(self.system_prompt(special_words, names, self.slavic_lang), self.user_prompt(text))
 
     @classmethod

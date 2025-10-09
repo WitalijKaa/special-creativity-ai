@@ -4,7 +4,7 @@ from src.models.services.prompt.abstract_prompt import AbstractPromptService
 
 class PromptServiceSlavicToEng(AbstractPromptService):
 
-    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]:
+    def prompt(self, text: str, special_words: list[PoetryWord], names: list[str]) -> list[dict]|dict:
         return self.prompt_structure(self.system_prompt(special_words, names), self.user_prompt(text))
 
     @classmethod

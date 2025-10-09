@@ -1,10 +1,11 @@
 from typing import Annotated
 from fastapi import FastAPI, Header, Request, HTTPException
-from src.controllers.poetry.redactor import action_make_text_better
+from src.controllers.poetry.redactor import action_make_text_better, action_make_final_text
 from src.middleware.llm import LlmModelMiddleware
 from src.middleware.pipe import LlmPipeMiddleware
 from src.models.llm.llm_model_nick import LlmModelNick
 from src.requests.headers_llm import HeadersLlm
+from src.requests.request_final import RequestFinal
 from src.requests.request_improve import RequestImprove
 from src.controllers.poetry.translate import action_translate_rus, action_translate_eng, action_translate_ukr, action_translate_srb
 from src.requests.request_translate import RequestTranslate
@@ -38,3 +39,7 @@ def web_routes_init(app: FastAPI):
     @app.post("/make_text_better")
     async def route_translate_eng(request: RequestImprove, headers: Annotated[HeadersLlm, Header()]) -> ResponseParagraphs:
         return ResponseParagraphs(response=action_make_text_better(request.content, request.separator))
+
+    @app.post("/make_final_text")
+    async def route_translate_eng(request: RequestFinal, headers: Annotated[HeadersLlm, Header()]) -> ResponseParagraphs:
+        return ResponseParagraphs(response=action_make_final_text(request.content))
