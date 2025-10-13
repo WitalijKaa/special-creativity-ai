@@ -14,7 +14,7 @@ class PromptServiceMakeTextBetter(AbstractPromptService):
             cls.rule_separators(text) + '\n' +
             cls.rule_names(names) + '\n' +
             cls.rule_special_words_list(special_words, 'The science-fiction contains special concepts; do not change it:') + '\n' +
-            # cls.rule_next_context(next_context) + '\n' + '\n' +
+            cls.rule_next_context(next_context) + '\n' + '\n' +
             'Answer only in English and only with improved text, no additional comments allowed.'
         )
 

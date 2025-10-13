@@ -14,7 +14,7 @@ class LlmVideoCard(LlmPoetryCore, LlmVideoCardBase):
 
     def make_text_better(self, chapter: Chapter):
         self.init_llm()
-        chapter.portion_params(1, 4)
+        chapter.portion_params(4, 1)
         while len(chapter.portion_of_text()) > 0:
             redacted = self.make_text_portion_better(chapter.portion_of_text(), chapter.next_portion())
             chapter.add_redacted(redacted)

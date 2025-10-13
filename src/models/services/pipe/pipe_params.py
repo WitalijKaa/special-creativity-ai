@@ -26,7 +26,7 @@ class LlmPipeParams(PipeBase):
         self.min_new_tokens = None
         self.max_new_tokens = None
 
-        self.calculation_branches = 8  # num_beams
+        self.calculation_branches = 5  # num_beams
         self.temperature = None
         self.long_answer = 1.0  # length_penalty (if more 1.0 -> longer answer)
 
@@ -41,13 +41,13 @@ class LlmPipeParams(PipeBase):
     # TEMPERATURE
 
     def temperature_secured(self):
-        self.calculation_branches = 8
+        self.calculation_branches = 5
         self.temperature = None
         self.long_answer = 1.0
         self.repetition_penalty = 1.0
 
     def temperature_normal(self):
-        self.calculation_branches = 2
+        self.calculation_branches = 1
         self.temperature = 0.71
         self.t_variants = 18
         self.t_threshold = 0.85
@@ -56,7 +56,7 @@ class LlmPipeParams(PipeBase):
 
     def temperature_medium(self):
         if self.temperature is not None:
-            self.calculation_branches = 2
+            self.calculation_branches = 1
             self.temperature = 0.88
             self.t_variants = 18
             self.t_threshold = 0.91
@@ -65,7 +65,7 @@ class LlmPipeParams(PipeBase):
 
     def temperature_high(self):
         if self.temperature is not None:
-            self.calculation_branches = 2
+            self.calculation_branches = 1
             self.temperature = 0.98
             self.t_variants = 24
             self.t_threshold = 0.95
@@ -76,21 +76,21 @@ class LlmPipeParams(PipeBase):
 
     def quality_medium(self):
         if self.temperature is not None:
-            self.calculation_branches = 3
+            self.calculation_branches = 1
             if self.long_answer > 1.0:
                 self.long_answer *= 0.8
             self.repetition_penalty *= 1.2
         else:
-            self.calculation_branches = 10
+            self.calculation_branches = 7
 
     def quality_high(self):
         if self.temperature is not None:
-            self.calculation_branches = 4
+            self.calculation_branches = 2
             if self.long_answer > 1.0:
                 self.long_answer *= 0.65
             self.repetition_penalty *= 1.42
         else:
-            self.calculation_branches = 12
+            self.calculation_branches = 11
 
 
     # OTHER
