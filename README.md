@@ -11,6 +11,7 @@
 #### .\.ex_env\Scripts\Activate.ps1
 
 #### fastapi dev .\main.py
+#### uvicorn main:app --host 127.0.0.1 --port 8011 --reload
 
 ## additional info
 

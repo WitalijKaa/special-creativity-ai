@@ -6,6 +6,7 @@ torchvision
 --index-url https://pypi.org/simple
 pydantic
 fastapi[standard]
+uvicorn[standard]
 python-dotenv
 rich
 openai
