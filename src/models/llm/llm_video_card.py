@@ -55,7 +55,7 @@ class LlmVideoCard(LlmPoetryCore, LlmVideoCardBase):
             piping = LlmPipeMiddleware.configurator()
             piping.calculate_tokens(self.count_tokens_of_text(paragraph), *self.prompter.min_max_multiplicator())
             chunk = self.answer_vs_prompt(prompt, piping.config())
-            aLog.debug(f'LLM-local CHUNK {chunk.split('\n')}')
+            aLog.debug(f'LLM-local CHUNK {chunk.split("\n")}')
             translated_paragraph = ' '.join(self.split_chunk_to_paragraphs(chunk))
             chapter.add_redacted([translated_paragraph])
         return chapter.get_redacted()
