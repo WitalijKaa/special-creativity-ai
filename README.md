@@ -1,3 +1,9 @@
+# SPECIAL CREATIVITY is an engine for my hobby — writing science fiction in a very specific genre.
+
+I have created a calculator + accounting notebook to track lives and events of personages of my book. Its a very simple project, but it has good code examples and integration with LLM that u can run on local PC. Very personal stuff in the fact.
+
+----
+
 # special-creativity-python
 
 ## install python 3
